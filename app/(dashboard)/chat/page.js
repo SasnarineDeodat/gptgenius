@@ -1,3 +1,9 @@
-export default function page() {
-  return <div>ChatPage</div>;
+import Chat from "@/components/Chat";
+
+export default function ChatPage() {
+  return (
+    <>
+      <Chat />
+    </>
+  );
 }
