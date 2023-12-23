@@ -2,7 +2,6 @@
 import OpenAI from "openai";
 import prisma from "./db";
 import { revalidatePath } from "next/cache";
-
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -11,18 +10,17 @@ export const generateChatResponse = async (chatMessages) => {
   try {
     const response = await openai.chat.completions.create({
       messages: [
-        {
-          role: "system",
-          content: "you are a helpful assistant",
-        },
+        { role: "system", content: "you are a helpful assistant" },
         ...chatMessages,
       ],
       model: "gpt-3.5-turbo",
       temperature: 0,
       max_tokens: 100,
     });
-
-    return response.choices[0].message;
+    return {
+      message: response.choices[0].message,
+      tokens: response.usage.total_tokens,
+    };
   } catch (error) {
     console.log(error);
     return null;
@@ -39,7 +37,7 @@ Once you have a list, create a one-day tour. Response should be  in the followin
     "country": "${country}",
     "title": "title of the tour",
     "description": "short description of the city and tour",
-    "stops": ["short paragraph on the stop 1 ", "short paragraph on the stop 2","short paragraph on the stop 3"]
+    "stops": [" stop name", "stop name","stop name"]
   }
 }
 "stops" property should include only three stops.
@@ -56,7 +54,7 @@ If you can't find info on exact ${city}, or ${city} does not exist, or it's popu
       model: "gpt-3.5-turbo",
       temperature: 0,
     });
-    console.log(response);
+
     const tourData = JSON.parse(response.choices[0].message.content);
     if (!tourData.tour) {
       return null;
@@ -67,6 +65,7 @@ If you can't find info on exact ${city}, or ${city} does not exist, or it's popu
     return null;
   }
 };
+
 export const getExistingTour = async ({ city, country }) => {
   return prisma.tour.findUnique({
     where: {
@@ -77,6 +76,7 @@ export const getExistingTour = async ({ city, country }) => {
     },
   });
 };
+
 export const createNewTour = async (tour) => {
   return prisma.tour.create({
     data: tour,
@@ -99,6 +99,8 @@ export const getAllTours = async (searchTerm) => {
           city: {
             contains: searchTerm,
           },
+        },
+        {
           country: {
             contains: searchTerm,
           },
@@ -123,7 +125,7 @@ export const getSingleTour = async (id) => {
 export const generateTourImage = async ({ city, country }) => {
   try {
     const tourImage = await openai.images.generate({
-      prompt: `a panaromic view of teh ${city} ${country}`,
+      prompt: `a panoramic view of teh ${city} ${country}`,
       n: 1,
       size: "512x512",
     });
@@ -139,6 +141,7 @@ export const fetchUserTokensById = async (clerkId) => {
       clerkId,
     },
   });
+
   return result?.tokens;
 };
 
@@ -171,5 +174,5 @@ export const subtractTokens = async (clerkId, tokens) => {
     },
   });
   revalidatePath("/profile");
-  result.tokens;
+  return result.tokens;
 };

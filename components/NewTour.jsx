@@ -5,12 +5,12 @@ import {
   generateTourResponse,
   createNewTour,
   fetchUserTokensById,
+  subtractTokens,
 } from "@/utils/actions";
 import TourInfo from "./TourInfo";
 import toast from "react-hot-toast";
 import { useAuth } from "@clerk/nextjs";
-
-export default function NewTour() {
+const NewTour = () => {
   const queryClient = useQueryClient();
   const { userId } = useAuth();
   const {
@@ -25,12 +25,11 @@ export default function NewTour() {
       const currentTokens = await fetchUserTokensById(userId);
 
       if (currentTokens < 300) {
-        toast.error("Token balance to low...");
+        toast.error("Token balance too low....");
         return;
       }
 
       const newTour = await generateTourResponse(destination);
-
       if (!newTour) {
         toast.error("No matching city found...");
         return null;
@@ -43,7 +42,6 @@ export default function NewTour() {
       return newTour.tour;
     },
   });
-
   const handleSubmit = (e) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -54,6 +52,7 @@ export default function NewTour() {
   if (isPending) {
     return <span className="loading loading-lg"></span>;
   }
+
   return (
     <>
       <form onSubmit={handleSubmit} className="max-w-2xl">
@@ -81,4 +80,5 @@ export default function NewTour() {
       <div className="mt-16">{tour ? <TourInfo tour={tour} /> : null}</div>
     </>
   );
-}
+};
+export default NewTour;
